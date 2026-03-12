@@ -6,18 +6,20 @@ import threading
 import time
 import urllib.request
 
-BRIDGE_CONF = "/data/rivian-bridge.conf"
+REPO_CONF = "/data/openpilot/rivian-bridge.conf"
+DATA_CONF = "/data/rivian-bridge.conf"
 DEFAULT_URL = "http://172.28.1.64:8082"
 
 
 def _read_bridge_url():
-    try:
-        with open(BRIDGE_CONF) as f:
-            url = f.read().strip()
-            if url:
-                return url
-    except FileNotFoundError:
-        pass
+    for path in (REPO_CONF, DATA_CONF):
+        try:
+            with open(path) as f:
+                url = f.read().strip()
+                if url:
+                    return url
+        except FileNotFoundError:
+            continue
     return DEFAULT_URL
 
 
