@@ -1,13 +1,31 @@
 """Background poller for Rivian bridge HTTP API on TCM."""
 
 import json
+import os
 import threading
 import time
 import urllib.request
 
+BRIDGE_CONF = "/data/rivian-bridge.conf"
+DEFAULT_URL = "http://172.28.1.64:8082"
+
+
+def _read_bridge_url():
+    try:
+        with open(BRIDGE_CONF) as f:
+            url = f.read().strip()
+            if url:
+                return url
+    except FileNotFoundError:
+        pass
+    return DEFAULT_URL
+
 
 class RivianBridge:
-    def __init__(self, url="http://172.28.1.64:8082"):
+    def __init__(self, url=None):
+        if url is None:
+            url = _read_bridge_url()
+
         self.url = url
         self.state = {}
         self._lock = threading.Lock()
