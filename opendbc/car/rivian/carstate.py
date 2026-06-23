@@ -20,7 +20,6 @@ class CarState(CarStateBase):
 
     from opendbc.car.rivian.rivian_bridge import RivianBridge
     self.bridge = RivianBridge()
-    self._last_personality = -1
     self._gas_override = False
     self._last_bridge_speed = 0
 
@@ -97,16 +96,10 @@ class CarState(CarStateBase):
       self._gas_override = True
       self.set_speed = ret.vEgo
 
-    # Sync follow distance from the Rivian bridge (only write when changed).
-    # Must run every frame, independent of the gas-override branch above.
-    if not self.bridge.stale:
-      personality = self.bridge.follow_personality
-      if personality >= 0 and personality != self._last_personality:
-        try:
-          Params().put_nonblocking('LongitudinalPersonality', str(personality))
-          self._last_personality = personality
-        except Exception:
-          pass
+    # NOTE: follow-distance (LongitudinalPersonality) sync is intentionally NOT
+    # done here. Writing params from this 100Hz update() can stall the control
+    # hot path and trip the Rivian ACC (VDM_AdasFaultStatus=Imps_Cmd). The
+    # personality write happens off-thread in RivianBridge._poll_loop (~3Hz).
 
     self.set_speed = max(MIN_SET_SPEED, min(self.set_speed, MAX_SET_SPEED))
     ret.cruiseState.speed = self.set_speed
