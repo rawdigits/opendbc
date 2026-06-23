@@ -97,7 +97,9 @@ class CarState(CarStateBase):
       self._gas_override = True
       self.set_speed = ret.vEgo
 
-      # Sync follow distance (only write when changed)
+    # Sync follow distance from the Rivian bridge (only write when changed).
+    # Must run every frame, independent of the gas-override branch above.
+    if not self.bridge.stale:
       personality = self.bridge.follow_personality
       if personality >= 0 and personality != self._last_personality:
         try:
